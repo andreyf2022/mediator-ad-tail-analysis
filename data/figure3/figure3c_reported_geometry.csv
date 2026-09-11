@@ -1,0 +1,3 @@
+comparison,paired_CA_atoms,alignment_or_search,rotation_degrees,centroid_displacement_A,residual_or_combined_RMSD_A,block_RMSD_A,optimal_split,source_status
+MED23 Extended-to-Bent rigid-body motion,1334,sequence-matched C-alpha pairs; global Kabsch fit; no outlier rejection,46.13,52.20,1.53,,,reported audited value; coordinate-level source manifest absent
+MED24 Extended-to-Bent internal hinge,897,ordered two-block divisions; at least 60 pairs per block; minimize combined within-block squared residuals,52.14,,1.29,0.00;1.48,Extended X226/X238 corresponding Bent split,reported audited value; coordinate-level source manifest absent

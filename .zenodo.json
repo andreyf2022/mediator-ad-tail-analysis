@@ -1,0 +1,30 @@
+{
+  "title": "Mediator activation-domain–Tail analysis: processed data and code",
+  "description": "Version 1.0.0 provides frozen processed source data, dataset manifests, and deterministic Python validation, summary, and plotting code supporting quantitative analyses of activation-domain engagement with the human Mediator Tail in the accompanying Mediator manuscript. The release uses processed inputs, excludes AF3 atomic coordinates and upstream structural-analysis code, and does not reproduce manual structural panels. Code is licensed under MIT; processed data and documentation are licensed under CC BY 4.0.",
+  "creators": [
+    {
+      "name": "Feklistov, Andrey",
+      "affiliation": "Department of Structural Biology, Stanford University School of Medicine, Stanford, California 94305, USA",
+      "orcid": "0000-0001-6207-1160"
+    },
+    {
+      "name": "Kornberg, Roger D.",
+      "affiliation": "Department of Structural Biology, Stanford University School of Medicine, Stanford, California 94305, USA",
+      "orcid": "0000-0002-2425-7519"
+    }
+  ],
+  "keywords": [
+    "Mediator complex",
+    "transcriptional activation",
+    "activation domains",
+    "AlphaFold 3",
+    "protein-protein interactions",
+    "structural biology",
+    "processed source data",
+    "human transcription"
+  ],
+  "license": "MIT",
+  "access_right": "open",
+  "upload_type": "software",
+  "version": "1.0.0"
+}

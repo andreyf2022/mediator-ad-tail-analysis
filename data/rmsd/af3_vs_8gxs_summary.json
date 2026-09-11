@@ -1,0 +1,40 @@
+{
+  "n_jobs": 293,
+  "all_jobs_included": true,
+  "candidate_model_ids": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "selection_metric": "highest AlphaFold Server ranking_score",
+  "selected_model_id_counts": {
+    "0": 293
+  },
+  "reference": "PDB 8GXS",
+  "included_AF3_chains_subunits": {
+    "A": "MED15",
+    "C": "MED29",
+    "D": "MED16",
+    "E": "MED25",
+    "F": "MED24",
+    "G": "MED23"
+  },
+  "excluded_AF3_chains_subunits": {
+    "B": "MED27",
+    "H": "activation domain"
+  },
+  "sequence_matching": "semiglobal sequence matching; exact implementation was not persisted",
+  "atom_selection": "paired C-alpha atoms",
+  "paired_CA_atoms_per_comparison": 3328,
+  "alignment": "single global Kabsch alignment",
+  "outlier_rejection": "none",
+  "median_RMSD_A": 1.8923320125933423,
+  "IQR_RMSD_A": [
+    1.7864482211191637,
+    1.9627380511044856
+  ],
+  "per_job_table": "af3_vs_8gxs_per_job.csv",
+  "coordinate_free_limitation": "The staged package supports the reported summary but cannot rerun atom-level RMSD without the selected 293 AF3 CIFs and the missing exact executable."
+}

@@ -1,0 +1,8 @@
+{
+  "q85_definition": {
+    "label": "top 15% activation-enhancing subset",
+    "threshold_Delta_minCMV": 2.260200281716645
+  },
+  "stronger_activation_enhancing_threshold_Delta_minCMV": 1.6205657816946992,
+  "source": "frozen 2026-08-09 r2 Q85 analysis manifest"
+}

@@ -1,0 +1,11 @@
+series,display_series,metric,estimate,bootstrap_by_gene_ci95_low,bootstrap_by_gene_ci95_high,n_deletions,n_genes
+Neutral,Neutral,deletion_interval_fraction_consensus_STRIDE_H,0.15660273972602737,0.1351176416088008,0.17812801535087713,1825,219
+LoF + Necessary,Activation-impairing,deletion_interval_fraction_consensus_STRIDE_H,0.3673581452104942,0.33152976009717583,0.4039146451952939,1639,208
+GoF,GoF,deletion_interval_fraction_consensus_STRIDE_H,0.1551282051282051,0.10261580964263436,0.2108284457478005,234,108
+GoF +0.5,GoF +0.5,deletion_interval_fraction_consensus_STRIDE_H,0.16435643564356436,0.08921568627450982,0.25111594202898546,101,54
+GoF Q85,GoF Q85,deletion_interval_fraction_consensus_STRIDE_H,0.13421052631578947,0.038088803088803094,0.25,38,24
+Neutral,Neutral,deletion_interval_any_consensus_STRIDE_H,0.30684931506849317,0.2738156663394892,0.34154849646621727,1825,219
+LoF + Necessary,Activation-impairing,deletion_interval_any_consensus_STRIDE_H,0.5991458206223307,0.5528777695623546,0.6445303835876058,1639,208
+GoF,GoF,deletion_interval_any_consensus_STRIDE_H,0.2863247863247863,0.2024780841168401,0.37262616660905634,234,108
+GoF +0.5,GoF +0.5,deletion_interval_any_consensus_STRIDE_H,0.297029702970297,0.17647058823529413,0.42857142857142855,101,54
+GoF Q85,GoF Q85,deletion_interval_any_consensus_STRIDE_H,0.21052631578947367,0.06451612903225806,0.4,38,24

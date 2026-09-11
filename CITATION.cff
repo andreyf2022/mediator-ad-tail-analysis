@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this code or processed data, please cite this release."
+type: software
+title: "Mediator activation-domain–Tail analysis: processed data and code"
+abstract: >-
+  Frozen processed source data and deterministic Python validation, summary,
+  and plotting code supporting quantitative analyses of activation-domain
+  engagement with the human Mediator Tail in the accompanying Mediator
+  manuscript. The release uses processed inputs, contains no AF3 atomic
+  coordinates, and does not include upstream structural-analysis code.
+authors:
+  - family-names: Feklistov
+    given-names: Andrey
+    orcid: "https://orcid.org/0000-0001-6207-1160"
+    affiliation: "Department of Structural Biology, Stanford University School of Medicine, Stanford, California 94305, USA"
+    email: andreyf@stanford.edu
+  - family-names: Kornberg
+    given-names: Roger D.
+    orcid: "https://orcid.org/0000-0002-2425-7519"
+    affiliation: "Department of Structural Biology, Stanford University School of Medicine, Stanford, California 94305, USA"
+version: 1.0.0
+repository-code: "https://github.com/andreyf2022/mediator-ad-tail-analysis"
+license: MIT
+keywords:
+  - Mediator complex
+  - transcriptional activation
+  - activation domains
+  - AlphaFold 3
+  - protein-protein interactions
+  - structural biology
+  - processed source data

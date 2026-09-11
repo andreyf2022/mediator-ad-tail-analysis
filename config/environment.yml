@@ -1,0 +1,10 @@
+name: mediator_coordinate_free_release
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - numpy
+  - pandas
+  - matplotlib
+  - pillow
+  - python=3.11
