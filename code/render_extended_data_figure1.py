@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Summarize and render Extended Data Figure 1 interpeak lengths.
 
-Purpose: calculate descriptive n/median/IQR values from the frozen interval
+Purpose: calculate descriptive n/median/IQR values from the stored interval
 table and draw the manuscript-facing distributions.
 Manuscript support: Extended Data Figure 1, interpeak interval lengths.
 Required inputs: ``data/extended_data_figure1/interpeak_interval_source_data.csv``
@@ -158,6 +158,27 @@ def validate_summary(summary: pd.DataFrame) -> None:
             raise ValueError(f"Unexpected summary for {series}: {checks}; expected {expected}")
 
 
+def validate_source(source: pd.DataFrame) -> None:
+    required = {
+        "series", "interval_id", "gene", "construct_start", "construct_end",
+        "interpeak_interval_length",
+    }
+    if missing := sorted(required - set(source.columns)):
+        raise ValueError(f"Interval source table is missing columns: {missing}")
+    if source.duplicated(["series", "interval_id"]).any():
+        raise ValueError("Interval identifiers are not unique within series")
+    if set(source["series"].astype(str)) != set(ORDER):
+        raise ValueError("Unexpected interval series")
+    numeric = source[["construct_start", "construct_end", "interpeak_interval_length"]].to_numpy(float)
+    if not np.isfinite(numeric).all():
+        raise ValueError("Interval source contains non-finite coordinates or lengths")
+    if not ((source["construct_start"] >= 1) & (source["construct_end"] >= source["construct_start"])).all():
+        raise ValueError("Invalid inclusive construct coordinates")
+    expected_lengths = source["construct_end"] - source["construct_start"] + 1
+    if not np.array_equal(expected_lengths.astype(int), source["interpeak_interval_length"].astype(int)):
+        raise ValueError("Interval length does not equal inclusive construct coordinates")
+
+
 def render(source: pd.DataFrame, summary: pd.DataFrame, output_dir: Path) -> list[Path]:
     fig, ax = plt.subplots(figsize=(8.25, 4.65))
     rng = np.random.default_rng(20260901)
@@ -282,6 +303,7 @@ def main() -> int:
     output_dir.mkdir(parents=True)
 
     source = pd.read_csv(source_path)
+    validate_source(source)
     q85_manifest = json.loads(thresholds_path.read_text())
     recovered_q85 = float(q85_manifest["q85_definition"]["threshold_Delta_minCMV"])
     if recovered_q85 != Q85_THRESHOLD:
@@ -304,9 +326,9 @@ def main() -> int:
         "Distributions of interpeak interval lengths are shown for all interpeak intervals (reference; "
         "n=283), intervals associated with activation-enhancing deletions (n=39), a stronger "
         "activation-enhancing subset (n=14), and the top 15% activation-enhancing subset (n=5). "
-        "The stronger subset used Delta_minCMV >= 1.6205657816946992, corresponding to 0.5 above "
+        f"The stronger subset used Delta_minCMV >= {STRONGER_THRESHOLD:.4f}, corresponding to 0.5 above "
         "the activation-enhancing threshold; the top-15% subset used Delta_minCMV >= "
-        "2.260200281716645 (the original Q85 definition). Violins show interval-length "
+        f"{Q85_THRESHOLD:.4f} (the original Q85 definition). Violins show interval-length "
         "distributions, thick horizontal segments show interquartile ranges, open circles show "
         "medians, and points show individual observations for the two smallest subsets. "
         "Activation-enhancing subsets are nested and the top-15% subset is small; comparisons are "
@@ -318,13 +340,8 @@ def main() -> int:
     legend_path.write_text(legend)
 
     manifest = {
-        "created_date": "2026-09-01",
         "rendering_only": True,
-        "source": {"path": str(source_path), "sha256": sha256(source_path)},
-        "source_lineage": (
-            "Latest validated interval table from the 2026-08-09 r2 Q85 sensitivity replot; "
-            "the 2026-08-25 terminology-cleanup renders reused the same interval values."
-        ),
+        "source": {"path": source_path.name, "sha256": sha256(source_path)},
         "display_labels": DISPLAY_LABELS,
         "palette": COLORS,
         "subset_definitions": {
@@ -334,14 +351,10 @@ def main() -> int:
         },
         "summary": summary.to_dict(orient="records"),
         "rendering_note": (
-            "The original horizontal violin encoding, IQR bars, median circles, small-subset "
-            "points, and 0-145-residue display range were restored from the historical renderer. "
-            "Median and sample-size annotations are positioned above, rather than over, each "
-            "distribution, and no extended-data figure number is embedded in the plotting area. "
-            "One 196-residue all-interpeak reference interval is retained in source data but lies "
-            "outside the historical display range."
+            "The 0-145-residue display range retains the reported encoding. One 196-residue "
+            "reference interval remains in the source table but lies outside that range."
         ),
-        "outputs": [str(path) for path in outputs] + [str(legend_path)],
+        "outputs": [path.name for path in outputs] + [legend_path.name],
         "validation": {
             "all_outputs_exist": all(path.exists() for path in outputs + [legend_path]),
             "all_outputs_nonempty": all(path.stat().st_size > 0 for path in outputs + [legend_path]),

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Render the quantitative panels in manuscript Figure 2C/D.
 
-Purpose: redraw frozen deletion-centered contact profiles and WFYL-zero
+Purpose: redraw stored deletion-centered contact profiles and WFYL-zero
 proportions; only a five-residue centered display mean is applied to Panel C.
 Manuscript support: Figure 2C (contact profiles) and Figure 2D (WFYL-zero).
 Required inputs: ``data/figure2/contact_profile_source_data.csv`` and
@@ -9,7 +9,7 @@ Required inputs: ``data/figure2/contact_profile_source_data.csv`` and
 Outputs: PNG/SVG panels, source-table copies, legend and run manifest in a new
 output directory.
 Example: ``python code/render_figure2_panels_CD.py --output-dir outputs/figure2_panels_CD``
-Fixed assumptions: Panel C activation-impairing means LoF OR necessary and
+Fixed assumptions: Panel C activation-impairing means LoF OR Necessary and
 uses Q85 Delta_minCMV >= 2.260200281716645; Panel D uses LoF only and displays
 the supplied gene-bootstrap 95% intervals. This script does not recalculate
 phenotypes, contact profiles, WFYL status or confidence intervals and never
@@ -313,7 +313,7 @@ def render_panel_d(source: pd.DataFrame, output_dir: Path) -> tuple[list[Path], 
         }
         for row in summary.itertuples(index=False)
     ]
-    return save_figure(fig, "Figure2_panel_D_WFYL_poor_deletions", output_dir), records
+    return save_figure(fig, "Figure2_panel_D_WFYL_zero_deletions", output_dir), records
 
 
 def validate_sources(contact: pd.DataFrame, wfyl: pd.DataFrame) -> None:
@@ -331,6 +331,37 @@ def validate_sources(contact: pd.DataFrame, wfyl: pd.DataFrame) -> None:
         raise ValueError(f"Panel C source is missing columns: {missing}")
     if missing := sorted(required_wfyl - set(wfyl.columns)):
         raise ValueError(f"Panel D source is missing columns: {missing}")
+    if contact.duplicated(["series", "offset"]).any():
+        raise ValueError("Panel C series/offset keys are not unique")
+    numeric_contact = ["offset", "mean_contact_percentile", "ci95_low", "ci95_high", "n_windows", "n_valid_at_offset"]
+    if not np.isfinite(contact[numeric_contact].to_numpy(float)).all():
+        raise ValueError("Panel C contains non-finite numeric values")
+    for series in contact["series"].unique():
+        frame = contact.loc[contact["series"].eq(series)].sort_values("offset")
+        if frame["offset"].astype(int).tolist() != list(range(-30, 31)):
+            raise ValueError(f"Panel C offset grid changed for {series}")
+        if frame["n_windows"].nunique() != 1:
+            raise ValueError(f"Panel C n_windows varies within {series}")
+    if not ((contact["ci95_low"] <= contact["mean_contact_percentile"]) &
+            (contact["mean_contact_percentile"] <= contact["ci95_high"])).all():
+        raise ValueError("Panel C confidence bounds do not bracket the mean")
+    if not ((contact["n_valid_at_offset"] >= 0) &
+            (contact["n_valid_at_offset"] <= contact["n_windows"])).all():
+        raise ValueError("Panel C available-window counts are out of range")
+    if wfyl["series"].duplicated().any() or set(wfyl["series"]) != set(WFYL_ORDER):
+        raise ValueError("Panel D must contain one row for each expected series")
+    numeric_wfyl = ["n_windows", "n_genes", "wfyl_free_count", "fraction", "percent",
+                    "cluster_bootstrap_ci95_low_percent", "cluster_bootstrap_ci95_high_percent"]
+    if not np.isfinite(wfyl[numeric_wfyl].to_numpy(float)).all():
+        raise ValueError("Panel D contains non-finite numeric values")
+    expected_fraction = wfyl["wfyl_free_count"].astype(float) / wfyl["n_windows"].astype(float)
+    if not np.allclose(wfyl["fraction"], expected_fraction, rtol=0, atol=1e-12):
+        raise ValueError("Panel D WFYL-zero fractions do not equal counts / windows")
+    if not np.allclose(wfyl["percent"], 100 * expected_fraction, rtol=0, atol=1e-10):
+        raise ValueError("Panel D WFYL-zero percentages do not equal 100 * counts / windows")
+    if not ((wfyl["cluster_bootstrap_ci95_low_percent"] <= wfyl["percent"]) &
+            (wfyl["percent"] <= wfyl["cluster_bootstrap_ci95_high_percent"])).all():
+        raise ValueError("Panel D confidence bounds do not bracket the estimate")
     expected_contact_n = {"GoF Q85": 38, "Neutral": 1838, "LoF + Necessary": 1643}
     observed_contact_n = {
         series: int(contact.loc[contact["series"].eq(series), "n_windows"].iloc[0])
@@ -376,13 +407,13 @@ def main() -> int:
         "Figure 2C. Deletion-centered mean contact-percentile profiles (five-residue centered "
         "display mean) for neutral (n=1,838), activation-impairing (n=1,643), and the top "
         "15% of mapped activation-enhancing deletions (n=38). The top-15% subset corresponds "
-        "to the original Q85 definition, Delta_minCMV >= 2.260200281716645.\n\n"
+        f"to the original Q85 definition, Delta_minCMV >= {Q85_THRESHOLD:.4f}.\n\n"
         "Figure 2D. Percentage of mapped/analyzed deleted regions lacking W, F, Y, or L: "
         "neutral (n=1,838), activation-enhancing (n=234), stronger activation-enhancing "
         "(n=101), top 15% activation-enhancing (n=38), and activation-impairing (n=1,341). "
-        "The stronger activation-enhancing subset uses Delta_minCMV >= 1.6205657816946992 "
+        f"The stronger activation-enhancing subset uses Delta_minCMV >= {STRONGER_THRESHOLD:.4f} "
         "(0.5 above the activation-enhancing threshold); the top-15% subset uses "
-        "Delta_minCMV >= 2.260200281716645. Whiskers show two-sided gene-cluster bootstrap "
+        f"Delta_minCMV >= {Q85_THRESHOLD:.4f}. Whiskers show two-sided gene-cluster bootstrap "
         "95% confidence intervals.\n"
     )
     (output_dir / "Figure2_panels_CD_legend.txt").write_text(legend)
@@ -393,8 +424,8 @@ def main() -> int:
         "visible_terminology": "activation-enhancing / activation-impairing deletions",
         "palette": PALETTE,
         "source_files": {
-            "panel_C": {"path": str(contact_source), "sha256": sha256(contact_source)},
-            "panel_D": {"path": str(wfyl_source), "sha256": sha256(wfyl_source)},
+            "panel_C": {"path": contact_source.name, "sha256": sha256(contact_source)},
+            "panel_D": {"path": wfyl_source.name, "sha256": sha256(wfyl_source)},
         },
         "panel_C": {
             "series_internal_order": CONTACT_ORDER,
@@ -411,7 +442,7 @@ def main() -> int:
             "stronger_threshold_Delta_minCMV": STRONGER_THRESHOLD,
             "q85_threshold_Delta_minCMV": Q85_THRESHOLD,
         },
-        "outputs": [str(path) for path in outputs],
+        "outputs": [path.name for path in outputs],
         "validation": {
             "all_outputs_exist": all(path.exists() for path in outputs),
             "all_outputs_nonempty": all(path.stat().st_size > 0 for path in outputs),

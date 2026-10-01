@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Render the Figure 1B/C multisubunit-engagement quantitative module.
 
-Purpose: validate and redraw the frozen final model-valency and recurrent-AD
+Purpose: validate and redraw the stored final model-valency and recurrent-AD
 counts; this script does not call contacts or reconstruct receptor occupancy.
-Manuscript support: Figure 1B/C and the corresponding 1,139-model/234-AD
-multisubunit statistics.
-Required input: ``data/figure1/final_counts_used.csv`` (or ``--counts-csv``).
+Manuscript support: the quantitative summaries underlying Figure 1B/C (the
+assembled manuscript uses donut plots, not this stacked-bar layout).
+Required inputs: ``data/figure1/final_counts_used.csv`` and
+``data/dataset/construct_model_manifest.csv`` (both overridable).
 Output: one PNG supplied with ``--output``.
 Example: ``python code/render_figure1_multisubunit.py --output outputs/figure1_multisubunit.png``
 Fixed assumptions: physical-subunit valency bins are 0, 1, 2 and >=3;
@@ -37,6 +38,7 @@ from matplotlib.patches import Patch
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_COUNTS = PACKAGE_ROOT / "data/figure1/final_counts_used.csv"
+DEFAULT_MANIFEST = PACKAGE_ROOT / "data/dataset/construct_model_manifest.csv"
 EXPECTED_MODEL_COUNTS = {
     "proximity": [15, 138, 161, 825],
     "strict_hydrophobic": [30, 290, 367, 452],
@@ -52,6 +54,7 @@ EXPECTED_N_ADS = 234
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--counts-csv", type=Path, default=DEFAULT_COUNTS)
+    parser.add_argument("--construct-manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--output", type=Path, required=True)
     return parser.parse_args()
 
@@ -62,7 +65,7 @@ def require_columns(frame: pd.DataFrame, columns: set[str]) -> None:
         raise ValueError(f"Final counts table is missing columns: {missing}")
 
 
-def load_plot_authority(counts_path: Path) -> dict[str, object]:
+def load_plot_authority(counts_path: Path, manifest_path: Path) -> dict[str, object]:
     counts = pd.read_csv(counts_path, low_memory=False)
     require_columns(
         counts,
@@ -124,6 +127,44 @@ def load_plot_authority(counts_path: Path) -> dict[str, object]:
         raise ValueError(f"Expected {2 * EXPECTED_N_ADS} per-AD rows; found {len(per_ad)}")
     if per_ad.duplicated(["definition", "fold_dir"]).any():
         raise ValueError("Per-AD fractions are not unique by definition and fold")
+    for definition in ("proximity", "strict_hydrophobic"):
+        frame = per_ad.loc[per_ad["definition"].eq(definition)].copy()
+        usable = frame["n_models_usable"].to_numpy(float)
+        multi = frame["n_models_multisubunit"].to_numpy(float)
+        fractions = frame["fraction_models_multisubunit"].to_numpy(float)
+        if not (np.isfinite(usable).all() and np.isfinite(multi).all() and np.isfinite(fractions).all()):
+            raise ValueError(f"Non-finite per-AD values for {definition}")
+        if not (np.equal(usable, usable.astype(int)).all() and np.equal(multi, multi.astype(int)).all()):
+            raise ValueError(f"Non-integer per-AD model counts for {definition}")
+        if not ((usable >= 1).all() and (usable <= 5).all() and (multi >= 0).all() and (multi <= usable).all()):
+            raise ValueError(f"Out-of-range per-AD model counts for {definition}")
+        if not np.allclose(fractions, multi / usable, rtol=0, atol=1e-15):
+            raise ValueError(f"Per-AD count/fraction mismatch for {definition}")
+        if int(usable.sum()) != EXPECTED_N_MODELS or int(multi.sum()) != EXPECTED_MULTI_COUNTS[definition]:
+            raise ValueError(f"Per-AD totals changed for {definition}")
+        if int((multi >= 2).sum()) != EXPECTED_RECURRENT_COUNTS[definition]:
+            raise ValueError(f"Per-AD recurrence count changed for {definition}")
+        if float(np.median(fractions)) != EXPECTED_MEDIANS[definition]:
+            raise ValueError(f"Per-AD median changed for {definition}")
+
+    manifest = pd.read_csv(manifest_path, low_memory=False)
+    retained = manifest.loc[manifest["in_234_contact_ensemble"].eq("yes")].copy()
+    if len(retained) != EXPECTED_N_ADS or retained["fold_dir"].duplicated().any():
+        raise ValueError("Construct manifest does not contain 234 unique retained folds")
+    if int(retained["n_retained_contact_models"].sum()) != EXPECTED_N_MODELS:
+        raise ValueError("Construct-manifest retained-model total is not 1,139")
+    expected_folds = set(retained["fold_dir"].astype(str))
+    for definition in ("proximity", "strict_hydrophobic"):
+        frame = per_ad.loc[per_ad["definition"].eq(definition)]
+        if set(frame["fold_dir"].astype(str)) != expected_folds:
+            raise ValueError(f"Per-AD folds disagree with construct manifest for {definition}")
+        joined = frame.merge(
+            retained[["fold_dir", "n_retained_contact_models"]], on="fold_dir", how="left", validate="one_to_one"
+        )
+        if not np.array_equal(
+            joined["n_models_usable"].astype(int), joined["n_retained_contact_models"].astype(int)
+        ):
+            raise ValueError(f"Per-AD usable counts disagree with construct manifest for {definition}")
 
     observed = {
         "model_valency_counts": model_counts,
@@ -259,14 +300,16 @@ def draw_figure(values: dict[str, object], output_path: Path) -> None:
 def main() -> int:
     args = parse_args()
     counts_path = args.counts_csv.expanduser().resolve()
+    manifest_path = args.construct_manifest.expanduser().resolve()
     output_path = args.output.expanduser().resolve()
-    if not counts_path.is_file():
-        raise FileNotFoundError(f"Missing final counts table: {counts_path}")
+    for path in (counts_path, manifest_path):
+        if not path.is_file():
+            raise FileNotFoundError(path)
     if output_path.suffix.lower() != ".png":
         raise ValueError("--output must end in .png")
     if output_path.exists():
         raise FileExistsError(f"Refusing to overwrite existing output: {output_path}")
-    values = load_plot_authority(counts_path)
+    values = load_plot_authority(counts_path, manifest_path)
     draw_figure(values, output_path)
     print(output_path)
     return 0

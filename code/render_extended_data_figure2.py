@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Render the pLDDT/helicity summary in Extended Data Figure 2.
 
-Purpose: redraw frozen class/contrast summaries and calculate only the displayed
+Purpose: redraw stored class/contrast summaries and calculate only the displayed
 Benjamini-Hochberg adjustment across the supplied 36 contrast P values.
 Manuscript support: Extended Data Figure 2A/B.
 Required inputs: five CSVs under ``data/extended_data_figure2``; each path can
@@ -11,7 +11,7 @@ Example: ``python code/render_extended_data_figure2.py --output-dir outputs/exte
 Fixed assumptions: contact and pLDDT ranks are within AD; Panel A confidence
 intervals are AD-bootstrap intervals; Panel B intervals are gene-bootstrap
 intervals; top pLDDT means the within-AD top quintile; activation-impairing
-means LoF OR necessary. The frozen upstream consensus-helix rule is STRIDE H in
+means LoF OR Necessary. The stored upstream consensus-helix rule is STRIDE H in
 >=40% of usable models, retained in runs of >=3 residues. This script does not
 rerun bootstraps, STRIDE or residue mapping and never overwrites an existing
 output directory.
@@ -96,6 +96,46 @@ def bh_adjust(values: np.ndarray) -> np.ndarray:
     result = np.empty_like(adjusted)
     result[order] = np.minimum(adjusted, 1.0)
     return result
+
+
+def validate_sources(
+    deciles: pd.DataFrame,
+    helix_classes: pd.DataFrame,
+    helix_contrasts: pd.DataFrame,
+    plddt_classes: pd.DataFrame,
+    plddt_contrasts: pd.DataFrame,
+) -> None:
+    if deciles["contact_decile"].astype(int).tolist() != list(range(1, 11)):
+        raise ValueError("Panel A must contain contact deciles 1 through 10 in order")
+    if deciles["contact_decile"].duplicated().any():
+        raise ValueError("Panel A contact deciles are not unique")
+    fraction_columns = [column for column in deciles if column != "contact_decile" and column != "n_ADs"]
+    values = deciles[fraction_columns].to_numpy(float)
+    if not np.isfinite(values).all() or not ((values >= 0) & (values <= 1)).all():
+        raise ValueError("Panel A fractions/means/CIs must be finite values in [0, 1]")
+    if not ((deciles["n_ADs"] > 0) & (deciles["n_ADs"] <= 234)).all():
+        raise ValueError("Panel A n_ADs values are out of range")
+    for center in ("helix_fraction", "top_plddt_fraction", "mean_relative_plddt"):
+        low = f"{center}_AD_bootstrap_ci95_low"
+        high = f"{center}_AD_bootstrap_ci95_high"
+        if not ((deciles[low] <= deciles[center]) & (deciles[center] <= deciles[high])).all():
+            raise ValueError(f"Panel A confidence interval does not bracket {center}")
+
+    for name, frame, keys, expected in (
+        ("helicity classes", helix_classes, ["series", "metric"], 10),
+        ("helicity contrasts", helix_contrasts, ["series", "reference", "metric"], 8),
+        ("pLDDT classes", plddt_classes, ["series", "metric"], 35),
+        ("pLDDT contrasts", plddt_contrasts, ["series", "reference", "metric"], 28),
+    ):
+        if len(frame) != expected or frame.duplicated(keys).any():
+            raise ValueError(f"Unexpected or duplicate {name} rows")
+    plddt_p = plddt_contrasts["bootstrap_two_sided_directional_p"].to_numpy(float)
+    helix_p = helix_contrasts["two_sided_bootstrap_by_gene_p"].to_numpy(float)
+    all_p = np.concatenate([plddt_p, helix_p])
+    if len(all_p) != 36 or not np.isfinite(all_p).all() or not ((all_p >= 0) & (all_p <= 1)).all():
+        raise ValueError("The combined BH family must contain 36 finite P values in [0, 1]")
+    if not np.isfinite(bh_adjust(all_p)).all():
+        raise ValueError("Combined 36-test BH adjustment failed")
 
 
 def draw_panel_a(ax: plt.Axes, deciles: pd.DataFrame) -> None:
@@ -240,10 +280,7 @@ def main() -> int:
     helix_contrasts = pd.read_csv(helix_contrasts_path)
     plddt_classes = pd.read_csv(plddt_classes_path)
     plddt_contrasts = pd.read_csv(plddt_contrasts_path)
-    if deciles["contact_decile"].astype(int).tolist() != list(range(1, 11)):
-        raise ValueError("Panel A must contain contact deciles 1 through 10 in order")
-    if len(plddt_contrasts) != 28 or len(helix_contrasts) != 8:
-        raise ValueError("Expected 28 pLDDT and 8 helicity contrasts for BH adjustment")
+    validate_sources(deciles, helix_classes, helix_contrasts, plddt_classes, plddt_contrasts)
 
     fig, axes = plt.subplots(1, 2, figsize=(8.35, 3.15), gridspec_kw={"width_ratios": [1.18, 0.82]})
     draw_panel_a(axes[0], deciles)

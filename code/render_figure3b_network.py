@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 """Render the receptor-site co-engagement network in Figure 3B.
 
-Purpose: redraw the accepted network from frozen node, edge and 2-D position
+Purpose: redraw the reported network from stored node, edge and 2-D position
 tables; no coordinates or contact pairs are read.
 Manuscript support: Figure 3B.
 Required inputs: ``data/figure3/figure3b_nodes.csv``, ``figure3b_edges.csv`` and
 ``figure3b_positions.csv`` (overridable by command-line arguments).
 Outputs: ``hotspot_receptor_graph.png`` and ``.svg`` in a new output directory.
 Example: ``python code/render_figure3b_network.py --out-dir outputs/figure3b_network``
-Fixed assumptions: eight displayed receptor sites (including MED24 D653),
-1,139 usable models, node area proportional to strict contact mass, edge width
-proportional to same-model strict co-engagement fraction, and the accepted
-fixed node positions/three display-only edge curvatures. Existing output
-directories are never overwritten.
+Fixed assumptions: eight displayed receptor sites (including MED24 D653) and
+1,139 usable models. Node area uses 0.78*(95 + 910*mass/max_mass); edge width
+uses 0.18 + 8.27*fraction/max_fraction. These visibility-preserving affine
+scales are not direct proportional encodings. Fixed positions and three edge
+curvatures are schematic display choices, not structural distances. Existing
+output directories are never overwritten.
 """
 
 from __future__ import annotations
@@ -133,7 +134,7 @@ def render(
     fig.text(
         0.065,
         0.915,
-        "strict hydrophobic support • 1,139 artifact-clean usable models",
+        "strict hydrophobic support • 1,139 models retained after artifact filtering",
         fontsize=8.5,
         color="#555555",
         va="top",
@@ -246,7 +247,7 @@ def render(
     ax.text(
         0.02,
         -0.105,
-        "Node area = strict mass",
+        "Node area\n(strict mass; affine)",
         transform=legend_transform,
         ha="left",
         va="center",
@@ -283,7 +284,7 @@ def render(
     ax.text(
         0.56,
         -0.105,
-        "Edge width = model count",
+        "Edge width\n(model count; affine)",
         transform=legend_transform,
         ha="left",
         va="center",
@@ -370,9 +371,18 @@ def main() -> int:
         keys = tuple(table["hotspot_key"].astype(str))
         if keys != EXPECTED_HOTSPOTS:
             raise ValueError(f"Unexpected {name} hotspot set or ordering: {keys}")
+    if node["hotspot_key"].duplicated().any() or positions["hotspot_key"].duplicated().any():
+        raise ValueError("Node or position keys are not unique")
     edge_keys = set(edge["hotspot_1"].astype(str)) | set(edge["hotspot_2"].astype(str))
     if not edge_keys.issubset(EXPECTED_HOTSPOTS):
         raise ValueError(f"Unexpected edge endpoint(s): {sorted(edge_keys - set(EXPECTED_HOTSPOTS))}")
+    if (edge["hotspot_1"].astype(str) == edge["hotspot_2"].astype(str)).any():
+        raise ValueError("Self-loops are not allowed")
+    unordered_edges = edge.apply(lambda row: tuple(sorted((str(row.hotspot_1), str(row.hotspot_2)))), axis=1)
+    if unordered_edges.duplicated().any():
+        raise ValueError("Duplicate unordered edge detected")
+    if len(edge) != 27:
+        raise ValueError("Expected 27 nonzero edges among eight nodes")
     denominators = set(node["usable_model_denominator"].astype(int)) | set(
         edge["usable_model_denominator"].astype(int)
     )
@@ -381,6 +391,19 @@ def main() -> int:
     expected_fractions = edge["supporting_models"].astype(float) / EXPECTED_USABLE_MODELS
     if not np.allclose(edge["fraction_usable_models"], expected_fractions, rtol=0, atol=1e-15):
         raise ValueError("Edge fractions do not equal supporting_models / 1,139")
+    for column in ("supporting_models", "supporting_ADs", "strict_pair_count"):
+        values = node[column].to_numpy(float)
+        if not np.equal(values, values.astype(int)).all() or (values < 0).any():
+            raise ValueError(f"Node {column} values must be nonnegative integers")
+    edge_support = edge["supporting_models"].to_numpy(float)
+    if not np.equal(edge_support, edge_support.astype(int)).all() or (edge_support <= 0).any():
+        raise ValueError("Edge support values must be positive integers")
+    if not np.isfinite(node["strict_contact_mass"].to_numpy(float)).all() or (node["strict_contact_mass"] < 0).any():
+        raise ValueError("Node strict-contact masses must be finite and nonnegative")
+    node_support = node.set_index("hotspot_key")["supporting_models"].astype(int)
+    for row in edge.itertuples(index=False):
+        if int(row.supporting_models) > min(node_support[row.hotspot_1], node_support[row.hotspot_2]):
+            raise ValueError(f"Edge support exceeds endpoint support: {row.hotspot_1}, {row.hotspot_2}")
     ext = {
         str(row.hotspot_key): np.array([float(row.x), float(row.y)])
         for row in positions.itertuples()

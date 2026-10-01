@@ -3,11 +3,10 @@ message: "If you use this code or processed data, please cite this release."
 type: software
 title: "Mediator activation-domain–Tail analysis: processed data and code"
 abstract: >-
-  Frozen processed source data and deterministic Python validation, summary,
-  and plotting code supporting quantitative analyses of activation-domain
-  engagement with the human Mediator Tail in the accompanying Mediator
-  manuscript. The release uses processed inputs, contains no AF3 atomic
-  coordinates, and does not include upstream structural-analysis code.
+  Processed source data, consistency checks, and plotting code supporting
+  quantitative analyses of activation-domain engagement with the human
+  Mediator Tail in the accompanying manuscript. The release contains no AF3
+  atomic coordinates and does not include upstream structural-analysis code.
 authors:
   - family-names: Feklistov
     given-names: Andrey
@@ -18,7 +17,7 @@ authors:
     given-names: Roger D.
     orcid: "https://orcid.org/0000-0002-2425-7519"
     affiliation: "Department of Structural Biology, Stanford University School of Medicine, Stanford, California 94305, USA"
-version: 1.0.0
+version: 1.0.1
 repository-code: "https://github.com/andreyf2022/mediator-ad-tail-analysis"
 license: MIT
 keywords:

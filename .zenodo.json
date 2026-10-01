@@ -1,6 +1,6 @@
 {
   "title": "Mediator activation-domain–Tail analysis: processed data and code",
-  "description": "Version 1.0.0 provides frozen processed source data, dataset manifests, and deterministic Python validation, summary, and plotting code supporting quantitative analyses of activation-domain engagement with the human Mediator Tail in the accompanying Mediator manuscript. The release uses processed inputs, excludes AF3 atomic coordinates and upstream structural-analysis code, and does not reproduce manual structural panels. Code is licensed under MIT; processed data and documentation are licensed under CC BY 4.0.",
+  "description": "Version 1.0.1 provides processed source data, dataset manifests, consistency checks, and plotting code supporting quantitative analyses of activation-domain engagement with the human Mediator Tail in the accompanying manuscript. The release uses processed inputs, excludes AF3 atomic coordinates and upstream structural-analysis code, and does not reproduce manual structural panels. Code is licensed under MIT; processed data and documentation are licensed under CC BY 4.0.",
   "creators": [
     {
       "name": "Feklistov, Andrey",
@@ -26,5 +26,5 @@
   "license": "MIT",
   "access_right": "open",
   "upload_type": "software",
-  "version": "1.0.0"
+  "version": "1.0.1"
 }
