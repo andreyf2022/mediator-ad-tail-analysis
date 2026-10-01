@@ -26,6 +26,27 @@ def read_csv(relative: str, **kwargs) -> pd.DataFrame:
     return pd.read_csv(path, **kwargs)
 
 
+def synthetic_junctions_by_gene() -> dict[str, tuple[int, ...]]:
+    """Return every construct-local synthetic junction for each affected gene."""
+    components = read_csv("data/dataset/construct_source_components.csv", dtype=str).fillna("")
+    components["construct_index"] = components["construct_index"].astype(int)
+    components["component_order"] = components["component_order"].astype(int)
+    components["appended_length"] = components["appended_length"].astype(int)
+    junctions: dict[str, tuple[int, ...]] = {}
+    for (_, gene), group in components.sort_values(
+        ["construct_index", "component_order"]
+    ).groupby(["construct_index", "gene"], sort=False):
+        cumulative_length = 0
+        positions: list[int] = []
+        for row in group.itertuples(index=False):
+            if row.synthetic_junction_after_previous_component == "yes":
+                positions.append(cumulative_length)
+            cumulative_length += int(row.appended_length)
+        if positions:
+            junctions[str(gene).lower()] = tuple(positions)
+    return junctions
+
+
 def validate_constructs() -> None:
     manifest = read_csv("data/dataset/construct_model_manifest.csv", dtype=str).fillna("")
     assert len(manifest) == 293
@@ -63,6 +84,10 @@ def validate_constructs() -> None:
     assert reconstructed.tolist() == expected.tolist()
     noncontiguous = components.loc[components["synthetic_junction_after_previous_component"].eq("yes")]
     assert noncontiguous["construct_index"].nunique() == 22
+    assert int((components["source_tile_sequence_length"].astype(int) != 80).sum()) == 183
+    junctions = synthetic_junctions_by_gene()
+    assert len(junctions) == 22 and sum(map(len, junctions.values())) == 23
+    assert junctions["znf469"] == (120, 200)
 
     model_status = {}
     for row in manifest.itertuples(index=False):
@@ -134,6 +159,30 @@ def validate_extended_data() -> None:
         (intervals.construct_end - intervals.construct_start + 1).astype(int),
         intervals.interpeak_interval_length.astype(int),
     )
+    junctions = synthetic_junctions_by_gene()
+    crossing = intervals.loc[
+        [
+            any(
+                int(row.construct_start) <= junction < int(row.construct_end)
+                for junction in junctions.get(str(row.gene).lower(), ())
+            )
+            for row in intervals.itertuples(index=False)
+        ]
+    ]
+    expected_crossing_ids = {
+        "CAMTA2_INTERPEAK_VALLEY_01",
+        "MYBL2_INTERPEAK_VALLEY_01",
+        "CREB3_INTERPEAK_VALLEY_02",
+        "MYT1L_INTERPEAK_VALLEY_01",
+        "ZNF469_INTERPEAK_VALLEY_02",
+        "ZNF469_INTERPEAK_VALLEY_04",
+        "ZFHX4_INTERPEAK_VALLEY_01",
+        "RFX7_INTERPEAK_VALLEY_01",
+        "KMT2C_INTERPEAK_VALLEY_01",
+        "RELB_INTERPEAK_VALLEY_03",
+    }
+    assert len(crossing) == 15
+    assert set(crossing["interval_id"].astype(str)) == expected_crossing_ids
 
     deciles = read_csv("data/extended_data_figure2/contact_decile_plddt_helicity.csv")
     assert deciles.contact_decile.astype(int).tolist() == list(range(1, 11))

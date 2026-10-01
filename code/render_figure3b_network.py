@@ -246,8 +246,8 @@ def render(
     legend_fontsize = 7.6
     ax.text(
         0.02,
-        -0.105,
-        "Node area\n(strict mass; affine)",
+        -0.070,
+        "Node area\nWeighted contact score",
         transform=legend_transform,
         ha="left",
         va="center",
@@ -260,7 +260,7 @@ def render(
     ):
         ax.scatter(
             [x],
-            [-0.205],
+            [-0.170],
             s=size,
             transform=legend_transform,
             color=red,
@@ -271,7 +271,7 @@ def render(
         )
         ax.text(
             label_x,
-            -0.205,
+            -0.170,
             f"{value:.0f}",
             transform=legend_transform,
             ha="left",
@@ -283,8 +283,8 @@ def render(
 
     ax.text(
         0.56,
-        -0.105,
-        "Edge width\n(model count; affine)",
+        -0.070,
+        "Edge width\nCo-engaged models",
         transform=legend_transform,
         ha="left",
         va="center",
@@ -301,7 +301,7 @@ def render(
     ):
         ax.plot(
             [x0, x1],
-            [-0.205, -0.205],
+            [-0.170, -0.170],
             transform=legend_transform,
             color=red_dark,
             linewidth=width,
@@ -311,7 +311,7 @@ def render(
         )
         ax.text(
             label_x,
-            -0.205,
+            -0.170,
             f"{value:.0f}",
             transform=legend_transform,
             ha="left",
@@ -325,8 +325,8 @@ def render(
     out_dir.mkdir(parents=True, exist_ok=False)
     png = out_dir / "hotspot_receptor_graph.png"
     svg = out_dir / "hotspot_receptor_graph.svg"
-    fig.savefig(png, dpi=600, facecolor="white", bbox_inches="tight")
-    fig.savefig(svg, facecolor="white", bbox_inches="tight")
+    fig.savefig(png, dpi=600, facecolor="white", bbox_inches="tight", pad_inches=0.18)
+    fig.savefig(svg, facecolor="white", bbox_inches="tight", pad_inches=0.18)
     plt.close(fig)
     return png, svg
 
