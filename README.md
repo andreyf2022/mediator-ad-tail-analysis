@@ -44,6 +44,6 @@ The scripts validate, aggregate, or redraw deposited processed tables. They do n
 
 ## Citation and licenses
 
-Citation metadata are in `CITATION.cff`; the original v1.0.0 archive is [Zenodo DOI 10.5281/zenodo.22819859](https://doi.org/10.5281/zenodo.22819859). Version 1.0.1 is an unreleased maintenance update until a new archive identifier is assigned.
+Citation metadata are in `CITATION.cff`. The current v1.0.1 archive is [Zenodo DOI 10.5281/zenodo.23088675](https://doi.org/10.5281/zenodo.23088675). For release history, v1.0.0 remains archived as [Zenodo DOI 10.5281/zenodo.22819859](https://doi.org/10.5281/zenodo.22819859).
 
 Code and the environment definition are licensed under MIT (`LICENSE-CODE`). Processed data and documentation are licensed under CC BY 4.0 (`LICENSE-DATA`).

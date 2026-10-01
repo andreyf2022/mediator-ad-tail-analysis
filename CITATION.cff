@@ -18,6 +18,8 @@ authors:
     orcid: "https://orcid.org/0000-0002-2425-7519"
     affiliation: "Department of Structural Biology, Stanford University School of Medicine, Stanford, California 94305, USA"
 version: 1.0.1
+doi: "10.5281/zenodo.23088675"
+date-released: 2026-10-01
 repository-code: "https://github.com/andreyf2022/mediator-ad-tail-analysis"
 license: MIT
 keywords:

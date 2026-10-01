@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.1 — unreleased
+## 1.0.1 — 2026-10-01
 
 - Document the exact assembly of 374 annotated AD intervals into 293 constructs and add its component mapping.
 - Replace internal workflow labels with scientific definitions; document AF3 build evidence, masking, site envelopes, panel-specific deletion populations, and coordinate-free limitations.

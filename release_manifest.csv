@@ -1,11 +1,11 @@
 staged_path,original_path,sha256,purpose
 .gitignore,v1.0.0/.gitignore,f1dd18cfac84e824dcdc811b2ef0a1c77e3a183d85b05328cc4e795449294c30,"Exclude generated renders, Python caches, virtual environments and platform metadata from the public repository."
-.zenodo.json,v1.0.0/.zenodo.json,18ba18d78e6dc02db7930869589a27ad9a2ee77b223473d3db9918950f14c242,Provisional Zenodo metadata for the unreleased v1.0.1 maintenance update.
-CHANGELOG.md,maintained in repository,52d07141c140a2bdd108c5465baaf6b08b6743638ce2ed493fdaa5a453bdde36,Concise release history and scope of the v1.0.1 maintenance update.
-CITATION.cff,v1.0.0/CITATION.cff,52b4062d435f50516960085be7528d2ac757d810aecea0b9442a34e00e5e77a7,Machine-readable citation metadata for the unreleased v1.0.1 maintenance update.
+.zenodo.json,v1.0.0/.zenodo.json,18ba18d78e6dc02db7930869589a27ad9a2ee77b223473d3db9918950f14c242,Zenodo metadata for the v1.0.1 maintenance release.
+CHANGELOG.md,maintained in repository,85d1e196e60ffee9815bcacb6d39b4507c006f405375ebebeff1ca23d0de9777,Concise release history and scope of the v1.0.1 maintenance update.
+CITATION.cff,v1.0.0/CITATION.cff,266efa8b07bc839e451da2883ebb9ec9e4700e00b995850b7a8d0e1d2a756dee,Machine-readable citation metadata for the v1.0.1 maintenance release.
 LICENSE-CODE,v1.0.0/LICENSE-CODE,7c7cf20b3dfedd283a6cb04a4ed0f6fb3036c38f997b3e689b4b53bbdfcaf179,MIT license for released code and environment definition.
 LICENSE-DATA,v1.0.0/LICENSE-DATA,d29bef5a685d12ce9e9bf258dff078b75ed90f0a734cf8649558d265f33a55c8,"CC BY 4.0 notice for processed data, README and metadata."
-README.md,v1.0.0/README.md,ce0eeadadd7f564c2a5f6743933cc2969f401c5bcd4eab5b639d220fbe7a5a77,"Public scope, figure-to-file map, execution commands, limitations, citation and licenses."
+README.md,v1.0.0/README.md,711ee740aac013fec39a1de2c078036beffb8ad9529081e97bfca549f99c4bb5,"Public scope, figure-to-file map, execution commands, limitations, citation and licenses."
 code/render_extended_data_figure1.py,v1.0.0/code/render_extended_data_figure1.py,3f24d9017bcddc1d26dc18b471de8d3eb0d3d2c3f5abb2f3ea31415671af1197,"Aggregate n/median/IQR and render interpeak interval summary from the stored interval table; released copy adds a public header, CLI, threshold checks and portable paths."
 code/render_extended_data_figure2.py,v1.0.0/code/render_extended_data_figure2.py,8a092229e8a642f308a68de398d0ad14af602fb395681d5ff1e926bf83e3ed07,"Render pLDDT/helicity summary and recompute only the displayed BH adjustment across 36 stored contrast P values; released copy adds a public header, CLI, checks and portable paths."
 code/render_figure1_multisubunit.py,v1.0.0/code/render_figure1_multisubunit.py,d7b7301341c8fcba2c2701c8c021a3222ae514913355c4a1d5df7287e7731764,Validate and redraw stored multisubunit model and recurrent-AD summary counts.
